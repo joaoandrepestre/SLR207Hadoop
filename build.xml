@@ -1,0 +1,81 @@
+<project name="SLR207Hadoop">
+
+    <target name="build">
+        <delete dir="bin"/>
+        <mkdir dir="bin"/>
+        <javac srcdir="src" destdir="bin"/>
+    </target>
+
+     <target name="clean" depends="build">
+        <java classname="distributed.deploy.Clean">
+        <classpath>
+            <pathelement location="bin/"/>
+            <pathelement path="${java.class.path}"/>
+        </classpath>
+        <arg value="targets"/>
+        </java>
+    </target>
+
+    <target name="deploy" depends="clean">
+        <java classname="distributed.deploy.Deploy">
+        <classpath>
+            <pathelement location="bin/"/>
+            <pathelement path="${java.class.path}"/>
+        </classpath>
+        <arg value="targets"/>
+        </java>
+    </target>
+
+    <target name="deploy-no-clean" depends="build">
+        <java classname="distributed.deploy.Deploy">
+        <classpath>
+            <pathelement location="bin/"/>
+            <pathelement path="${java.class.path}"/>
+        </classpath>
+        <arg value="targets"/>
+        </java>
+    </target>
+
+    <target name="run" depends="deploy">
+        <property name="input" value="input.txt"/>
+        <property name="nbMachines" value="3"/>
+        <java classname="distributed.Master">
+        <classpath>
+            <pathelement location="bin/"/>
+            <pathelement path="${java.class.path}"/>
+        </classpath>
+        <arg value="machinesOn"/>
+        <arg value="${input}"/>
+        <arg value="${nbMachines}"/>
+        </java>
+    </target>
+
+    <target name="run-no-deploy" depends="build">
+        <property name="input" value="input.txt"/>
+        <property name="nbMachines" value="3"/>
+        <java classname="distributed.Master">
+        <classpath>
+            <pathelement location="bin/"/>
+            <pathelement path="${java.class.path}"/>
+        </classpath>
+        <arg value="machinesOn"/>
+        <arg value="${input}"/>
+        <arg value="${nbMachines}"/>
+        </java>
+    </target>
+
+    <target name="run-no-clean" depends="deploy-no-clean">
+        <property name="input" value="input.txt"/>
+        <property name="nbMachines" value="3"/>
+        <java classname="distributed.Master">
+        <classpath>
+            <pathelement location="bin/"/>
+            <pathelement path="${java.class.path}"/>
+        </classpath>
+        <arg value="machinesOn"/>
+        <arg value="${input}"/>
+        <arg value="${nbMachines}"/>
+        </java>
+    </target>
+
+</project>

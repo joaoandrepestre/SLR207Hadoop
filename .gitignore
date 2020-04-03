@@ -1,0 +1,9 @@
+.classpath
+.project
+.settings/
+bin/
+*.wet
+*.txt
+machinesOn
+*.mf
+single_target
