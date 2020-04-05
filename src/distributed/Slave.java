@@ -11,18 +11,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import distributed.utils.Constants;
-import distributed.utils.CopyFile;
-import distributed.utils.Local;
+import distributed.utils.*;
 
 public class Slave {
 
-	private ArrayList<Integer> hashs;
 	private String hostname;
 	private String[] machines;
 
 	public Slave() throws NumberFormatException, IOException {
-		hashs = new ArrayList<Integer>();
 		hostname = InetAddress.getLocalHost().getHostName();
 
 		BufferedReader machinesFile = new BufferedReader(new FileReader(Constants.BASEDIR + "/machines.txt"));
@@ -62,35 +58,50 @@ public class Slave {
 		Local.createDir(Constants.BASEDIR + "/shuffles");
 
 		BufferedReader mapFile = new BufferedReader(new FileReader(filename));
+		ArrayList<Integer> hashs = new ArrayList<Integer>();
 
 		String line;
 		String[] words;
+
+		int nbMachines = machines.length;
 
 		while ((line = mapFile.readLine()) != null) {
 			words = line.split(" ");
 			int hash = Local.positiveHash(words[0]);
 			hashs.add(hash);
+			String hashedFileName = Constants.BASEDIR + "/shuffles/" + hash + "-" + hostname + ".txt";
 			BufferedWriter hashedFile = new BufferedWriter(
-					new FileWriter(Constants.BASEDIR + "/shuffles/" + hash + "-" + hostname + ".txt", true));
+					new FileWriter(hashedFileName, true));
 			hashedFile.write(line + "\n");
 			hashedFile.close();
 		}
-
 		mapFile.close();
+
+		Local.createDir(Constants.BASEDIR + "/shuffles/zips");
+		for(int hash: hashs){
+			int machineIndex = hash % nbMachines;
+			String machine = machines[machineIndex];
+			String hashedFile = Constants.BASEDIR + "/shuffles/" + hash + "-" + hostname + ".txt";
+			String zipFilename = Constants.BASEDIR + "/shuffles/zips/" + machine + "_" + hostname;
+
+			Local.zipFile(hashedFile, zipFilename);
+		}
 	}
 
 	public void shuffle(String filename) throws NumberFormatException, IOException, InterruptedException {
 		ArrayList<Thread> threads = new ArrayList<Thread>();
 
 		hash(filename);
-		int nbMachines = machines.length;
 
-		for (int hash : hashs) {
-			int machineIndex = hash % nbMachines;
-			String machine = machines[machineIndex];
-			String hashedFile = Constants.BASEDIR + "/shuffles/" + hash + "-" + hostname + ".txt";
+		File zipDir = new File(Constants.BASEDIR + "/shuffles/zips");
 
-			CopyFile cp = new CopyFile(hashedFile, machine, Constants.BASEDIR + "/shufflesreceived");
+		for(File file: zipDir.listFiles()){
+			String sourceDir = Constants.BASEDIR + "/shuffles/zips/";
+			String zipFilename = file.getName();
+			String machine = zipFilename.split("_")[0]; 
+			String destdir = Constants.BASEDIR + "/shufflesreceived";
+			
+			CopyAndUnzip cp = new CopyAndUnzip(sourceDir, zipFilename, machine, destdir);
 			threads.add(cp);
 			cp.start();
 		}
@@ -106,7 +117,7 @@ public class Slave {
 
 		Local.createDir(Constants.BASEDIR + "/reduces");
 
-		File shufflesreceivedDir = new File(Constants.BASEDIR + "/shufflesreceived");
+		File shufflesreceivedDir = new File(Constants.BASEDIR + "/shufflesreceived/tmp/jpestre/shuffles");
 		for (File file : shufflesreceivedDir.listFiles()) {
 			BufferedReader hashedFile = new BufferedReader(new FileReader(file));
 			String line;

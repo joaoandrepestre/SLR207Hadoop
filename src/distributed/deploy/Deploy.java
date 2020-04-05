@@ -26,7 +26,9 @@ public class Deploy {
 		ProcessBuilder pb = new ProcessBuilder("javac", "-d", ".", "src/distributed/Slave.java", 
 																   "src/distributed/utils/CopyFile.java",
 																   "src/distributed/utils/Constants.java",
-																   "src/distributed/utils/Local.java");
+																   "src/distributed/utils/Local.java",
+																   "src/distributed/utils/CopyAndUnzip.java",
+																   "src/distributed/utils/DeleteDir.java");
 		pb.redirectErrorStream(true);
 		Process p = pb.start();
 
