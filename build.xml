@@ -36,9 +36,24 @@
         </java>
     </target>
 
+    <target name="run-sequential" depends="build">
+        <property name="input" value="input"/>
+        <property name="output" value="out-sequential-${input}"/>
+        <java classname="sequential.WordCounter">
+        <classpath>
+            <pathelement location="bin/"/>
+            <pathelement path="${java.class.path}"/>
+        </classpath>
+        <arg value="${input}"/>
+        <arg value="${output}"/>
+        </java>
+    </target>
+
     <target name="run" depends="deploy">
-        <property name="input" value="input.txt"/>
+        <property name="input" value="input"/>
         <property name="nbMachines" value="3"/>
+        <property name="output" value="out-${nbMachines}-${input}"/>
+        <property name="verbose" value="0"/>
         <java classname="distributed.Master">
         <classpath>
             <pathelement location="bin/"/>
@@ -47,12 +62,16 @@
         <arg value="machinesOn"/>
         <arg value="${input}"/>
         <arg value="${nbMachines}"/>
+        <arg value="${output}"/>
+        <arg value="${verbose}"/>
         </java>
     </target>
 
     <target name="run-no-deploy" depends="build">
-        <property name="input" value="input.txt"/>
+        <property name="input" value="input"/>
         <property name="nbMachines" value="3"/>
+        <property name="output" value="out-${nbMachines}-${input}"/>
+        <property name="verbose" value="0"/>
         <java classname="distributed.Master">
         <classpath>
             <pathelement location="bin/"/>
@@ -61,12 +80,16 @@
         <arg value="machinesOn"/>
         <arg value="${input}"/>
         <arg value="${nbMachines}"/>
+        <arg value="${output}"/>
+        <arg value="${verbose}"/>
         </java>
     </target>
 
     <target name="run-no-clean" depends="deploy-no-clean">
-        <property name="input" value="input.txt"/>
+        <property name="input" value="input"/>
         <property name="nbMachines" value="3"/>
+        <property name="output" value="out-${nbMachines}-${input}"/>
+        <property name="verbose" value="0"/>
         <java classname="distributed.Master">
         <classpath>
             <pathelement location="bin/"/>
@@ -75,6 +98,8 @@
         <arg value="machinesOn"/>
         <arg value="${input}"/>
         <arg value="${nbMachines}"/>
+        <arg value="${output}"/>
+        <arg value="${verbose}"/>
         </java>
     </target>
 

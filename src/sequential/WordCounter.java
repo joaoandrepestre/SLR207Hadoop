@@ -10,10 +10,12 @@ import java.util.stream.Stream;
 public class WordCounter {
 	
 	BufferedReader in = null;
+	PrintStream out = null;
 	HashMap<String, Integer> wordsCounted;
 	
-	public WordCounter(String filename) throws IOException{
+	public WordCounter(String filename, PrintStream out) throws IOException{
 		in = new BufferedReader(new FileReader(filename));
+		this.out = out;
 		wordsCounted = new HashMap<String, Integer>();
 	}
 	
@@ -36,11 +38,11 @@ public class WordCounter {
 		}
 	}
 	
-	public static void printEntry(Map.Entry<String, Integer> entry) {
-		System.out.println(entry.getKey() + " " + entry.getValue());
+	public void print(Stream<Entry<String, Integer>> sorted){
+		sorted.forEach(entry->{
+			out.println(entry.getKey() + " " + entry.getValue());
+		});
 	}
-	
-	
 	
 	public Stream<Entry<String, Integer>> sort() {
 		return wordsCounted.entrySet()
@@ -56,8 +58,10 @@ public class WordCounter {
 	
 	public static void main(String args[]) throws IOException {
 		String filename = args[0];
-		
-		WordCounter wc = new WordCounter(filename);
+		String outFile = args[1];
+		PrintStream out = new PrintStream(outFile);
+
+		WordCounter wc = new WordCounter(filename, out);
 		long startTime = System.currentTimeMillis();
 		wc.count();
 		long endTime = System.currentTimeMillis();
@@ -66,10 +70,10 @@ public class WordCounter {
 		Stream<Entry<String, Integer>> sorted = wc.sort();
 		endTime = System.currentTimeMillis();
 		long timeToSort = endTime - startTime;
-		sorted.forEach(WordCounter::printEntry);
+		wc.print(sorted);
 		
-		System.out.println("Time to count: " + timeToCount);
-		System.out.println("Time to sort: " + timeToSort);
+		out.println("Time to count: " + timeToCount);
+		out.println("Time to sort: " + timeToSort);
 
 	}
 

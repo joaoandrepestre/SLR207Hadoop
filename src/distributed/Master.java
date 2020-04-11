@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -20,16 +21,19 @@ public class Master {
 	private BufferedReader machinesOn;
 	private ArrayList<String> machinesUsed;
 	private int nbMachines;
+	private PrintStream out = null;
+	private int verbose;
 
-	public Master(String filename, int _nbMachines) throws NumberFormatException, IOException {
+	public Master(String filename, int _nbMachines, PrintStream out, int verbose) throws NumberFormatException, IOException {
 		machinesOn = new BufferedReader(new FileReader(filename));
 		int maxNbMachines = Integer.parseInt(machinesOn.readLine());
 		this.nbMachines = _nbMachines > maxNbMachines ? maxNbMachines : _nbMachines;
 		machinesUsed = new ArrayList<String>();
+		this.out = out;
+		this.verbose = verbose;
 	}
 
 	public void split(String input) throws IOException, InterruptedException {
-		System.out.println("Spliting file into " + nbMachines + " splits...");
 		Local.createDir(Constants.BASEDIR + "/splits");
 
 		ArrayList<Thread> threads = new ArrayList<Thread>();
@@ -62,6 +66,7 @@ public class Master {
 			machinesUsed.add(machine);
 			machines.write(machine + "\n");
 
+			if(verbose == 1) System.out.println("Copying split " + splitName + " to machine " + machine);
 			CopyFile cp = new CopyFile(splitName, machine, Constants.BASEDIR + "/splits");
 			threads.add(cp);
 			cp.start();
@@ -72,7 +77,6 @@ public class Master {
 		for (Thread t : threads) {
 			t.join();
 		}
-		System.out.println("SPLIT FINISHED");
 	}
 
 	public void map() throws IOException, InterruptedException {
@@ -84,14 +88,13 @@ public class Master {
 
 			RunSlave rs = new RunSlave(machine, 0, file);
 			threads.add(rs);
-			System.out.println("Calling map on machine " + machine + " and file " + file);
+			if(verbose == 1) System.out.println("Calling map on machine " + machine + " and file " + file);
 			rs.start();
 		}
 
 		for (Thread t : threads) {
 			t.join();
 		}
-		System.out.println("MAP FINISHED");
 	}
 
 	public void prepareShuffle() throws IOException, InterruptedException {
@@ -118,14 +121,13 @@ public class Master {
 
 			RunSlave rs = new RunSlave(machine, 1, file);
 			threads.add(rs);
-			System.out.println("Calling shuffle on machine " + machine + " and file " + file);
+		    if(verbose == 1) System.out.println("Calling shuffle on machine " + machine + " and file " + file);
 			rs.start();
 		}
 
 		for (Thread t : threads) {
 			t.join();
 		}
-		System.out.println("SHUFFLE FINISHED");
 	}
 
 	public void reduce() throws IOException, InterruptedException {
@@ -134,14 +136,13 @@ public class Master {
 		for (String machine : machinesUsed) {
 			RunSlave rs = new RunSlave(machine, 2);
 			threads.add(rs);
-			System.out.println("Calling reduce on machine " + machine);
+			if(verbose == 1) System.out.println("Calling reduce on machine " + machine);
 			rs.start();
 		}
 
 		for (Thread t : threads) {
 			t.join();
 		}
-		System.out.println("REDUCE FINNISHED");
 	}
 
 	public void getReducedFiles() throws IOException, InterruptedException {
@@ -160,12 +161,7 @@ public class Master {
 		}
 	}
 
-	public static void printEntry(Map.Entry<String, Integer> entry) {
-		System.out.println(entry.getKey() + " " + entry.getValue());
-	}
-
 	public void getResults() throws IOException, InterruptedException {
-		System.out.println("Getting results...");
 		HashMap<String, Integer> results = new HashMap<String, Integer>();
 		getReducedFiles();
 
@@ -176,47 +172,66 @@ public class Master {
 			results.put(data[0], Integer.parseInt(data[1]));
 			reducedFile.close();
 		}
-		System.out.println("RESULTS FINISHED");
 
 		results.entrySet().stream().sorted(Map.Entry.<String, Integer>comparingByKey())
 				.sorted(Map.Entry.<String, Integer>comparingByValue(Comparator.reverseOrder()))
-				.forEach(Master::printEntry);
+				.forEach(entry -> {
+					out.println(entry.getKey() + " " + entry.getValue());
+				});
 	}
 
 	public static void main(String args[]) throws IOException, InterruptedException {
 		String machinesOn = args[0];
 		String input = args[1];
 		int nbMachines = Integer.parseInt(args[2]);
+		String outFile = args[3];
+		int verbose = Integer.parseInt(args[4]);
+
+		PrintStream out = new PrintStream(outFile);
 
 		long startTime, endTime, timeToSplit, timeToMap, timeToShuffle, timeToReduce;
 
-		Master master = new Master(machinesOn, nbMachines);
+		Master master = new Master(machinesOn, nbMachines, out, verbose);
 
+		System.out.println("Spliting file into " + nbMachines + " splits...");
 		startTime = System.currentTimeMillis();
 		master.split(input);
 		endTime = System.currentTimeMillis();
+		System.out.println("SPLIT FINISHED");
 		timeToSplit = endTime - startTime;
 
+		System.out.println("Starting map...");
 		startTime = System.currentTimeMillis();
 		master.map();
 		endTime = System.currentTimeMillis();
+		System.out.println("MAP FINISHED");
 		timeToMap = endTime - startTime;
 
+		System.out.println("Starting shuffle...");
 		startTime = System.currentTimeMillis();
 		master.suffle();
 		endTime = System.currentTimeMillis();
+		System.out.println("SHUFFLE FINISHED");
 		timeToShuffle = endTime - startTime;
 
+		System.out.println("Starting reduce...");
 		startTime = System.currentTimeMillis();
 		master.reduce();
 		endTime = System.currentTimeMillis();
+		System.out.println("REDUCE FINNISHED");
 		timeToReduce = endTime - startTime;
 
+		System.out.println("Getting results...");
 		master.getResults();
+		System.out.println("RESULTS FINISHED");
 
+		out.println("Time to split: " + timeToSplit + "ms");
 		System.out.println("Time to split: " + timeToSplit + "ms");
+		out.println("Time to map: " + timeToMap + "ms");
 		System.out.println("Time to map: " + timeToMap + "ms");
+		out.println("Time to shuffle: " + timeToShuffle + "ms");
 		System.out.println("Time to shuffle: " + timeToShuffle + "ms");
+		out.println("Time to reduce: " + timeToReduce + "ms");
 		System.out.println("Time to reduce: " + timeToReduce + "ms");
 	}
 
