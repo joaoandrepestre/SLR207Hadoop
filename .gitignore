@@ -5,6 +5,5 @@ bin/
 *.wet
 *.txt
 machinesOn
-*.mf
 single_target
 out-*
