@@ -10,16 +10,19 @@ public class GetFilesInDir extends Thread {
     private String machine;
     private String dirname;
     private String destinationDir;
+    private int verbose;
 
-    public GetFilesInDir(String machine, String dirname, String destinationDir) {
+    public GetFilesInDir(String machine, String dirname, String destinationDir, int verbose) {
         this.machine = machine;
         this.dirname = dirname;
         this.destinationDir = destinationDir;
+        this.verbose = verbose;
     }
 
     private void getFile(String filename) throws IOException, InterruptedException {
         ProcessBuilder pb = new ProcessBuilder("scp", machine + ":" + dirname + "/" + filename, destinationDir);
         pb.redirectErrorStream(true);
+        if(verbose == 1) pb.inheritIO();
         Process p = pb.start();
 
         p.waitFor();

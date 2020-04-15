@@ -24,7 +24,8 @@ public class Master {
 	private PrintStream out = null;
 	private int verbose;
 
-	public Master(String filename, int _nbMachines, PrintStream out, int verbose) throws NumberFormatException, IOException {
+	public Master(String filename, int _nbMachines, PrintStream out, int verbose)
+			throws NumberFormatException, IOException {
 		machinesOn = new BufferedReader(new FileReader(filename));
 		int maxNbMachines = Integer.parseInt(machinesOn.readLine());
 		this.nbMachines = _nbMachines > maxNbMachines ? maxNbMachines : _nbMachines;
@@ -34,7 +35,9 @@ public class Master {
 	}
 
 	public void split(String input) throws IOException, InterruptedException {
-		Local.createDir(Constants.BASEDIR + "/splits");
+		if (verbose == 1)
+			System.out.println("Creating splits directory...");
+		Local.createDir(Constants.BASEDIR + "/splits", verbose);
 
 		ArrayList<Thread> threads = new ArrayList<Thread>();
 		RandomAccessFile inputFile = new RandomAccessFile(input, "r");
@@ -66,8 +69,9 @@ public class Master {
 			machinesUsed.add(machine);
 			machines.write(machine + "\n");
 
-			if(verbose == 1) System.out.println("Copying split " + splitName + " to machine " + machine);
-			CopyFile cp = new CopyFile(splitName, machine, Constants.BASEDIR + "/splits");
+			if (verbose == 1)
+				System.out.println("Copying split " + splitName + " to machine " + machine);
+			CopyFile cp = new CopyFile(splitName, machine, Constants.BASEDIR + "/splits", verbose);
 			threads.add(cp);
 			cp.start();
 		}
@@ -86,9 +90,10 @@ public class Master {
 			String machine = machinesUsed.get(i);
 			String file = Constants.BASEDIR + "/splits/S" + i + ".txt";
 
-			RunSlave rs = new RunSlave(machine, 0, file);
+			RunSlave rs = new RunSlave(machine, 0, file, verbose);
 			threads.add(rs);
-			if(verbose == 1) System.out.println("Calling map on machine " + machine + " and file " + file);
+			if (verbose == 1)
+				System.out.println("Calling map on machine " + machine + " and file " + file);
 			rs.start();
 		}
 
@@ -101,7 +106,9 @@ public class Master {
 		ArrayList<Thread> threads = new ArrayList<Thread>();
 
 		for (String machine : machinesUsed) {
-			CopyFile cp = new CopyFile("machines.txt", machine, Constants.BASEDIR);
+			if (verbose == 1)
+				System.out.println("Copying file machines.txt to " + machine);
+			CopyFile cp = new CopyFile("machines.txt", machine, Constants.BASEDIR, verbose);
 			threads.add(cp);
 			cp.start();
 		}
@@ -119,9 +126,10 @@ public class Master {
 			String machine = machinesUsed.get(i);
 			String file = Constants.BASEDIR + "/maps/UM" + i + ".txt";
 
-			RunSlave rs = new RunSlave(machine, 1, file);
+			RunSlave rs = new RunSlave(machine, 1, file, verbose);
 			threads.add(rs);
-		    if(verbose == 1) System.out.println("Calling shuffle on machine " + machine + " and file " + file);
+			if (verbose == 1)
+				System.out.println("Calling shuffle on machine " + machine + " and file " + file);
 			rs.start();
 		}
 
@@ -134,9 +142,10 @@ public class Master {
 		ArrayList<Thread> threads = new ArrayList<Thread>();
 
 		for (String machine : machinesUsed) {
-			RunSlave rs = new RunSlave(machine, 2);
+			RunSlave rs = new RunSlave(machine, 2, verbose);
 			threads.add(rs);
-			if(verbose == 1) System.out.println("Calling reduce on machine " + machine);
+			if (verbose == 1)
+				System.out.println("Calling reduce on machine " + machine);
 			rs.start();
 		}
 
@@ -148,11 +157,15 @@ public class Master {
 	public void getReducedFiles() throws IOException, InterruptedException {
 		ArrayList<Thread> threads = new ArrayList<Thread>();
 
-		Local.createDir(Constants.BASEDIR + "/results");
+		if (verbose == 1)
+			System.out.println("Creating results directory...");
+		Local.createDir(Constants.BASEDIR + "/results", verbose);
 		for (String machine : machinesUsed) {
 			GetFilesInDir get = new GetFilesInDir(machine, Constants.BASEDIR + "/reduces",
-					Constants.BASEDIR + "/results");
+					Constants.BASEDIR + "/results", verbose);
 			threads.add(get);
+			if (verbose == 1)
+				System.out.println("Getting reduced files from machine" + machine + "...");
 			get.start();
 		}
 
@@ -167,12 +180,15 @@ public class Master {
 
 		File resultsDir = new File(Constants.BASEDIR + "/results");
 		for (File file : resultsDir.listFiles()) {
+			if(verbose == 1) System.out.println("Reading results from file " + file.getName() + "...");
 			BufferedReader reducedFile = new BufferedReader(new FileReader(file));
 			String[] data = reducedFile.readLine().split(" ");
 			results.put(data[0], Integer.parseInt(data[1]));
 			reducedFile.close();
 		}
 
+		if(verbose == 1) System.out.println("Sorting and printing to output file...");
+	
 		results.entrySet().stream().sorted(Map.Entry.<String, Integer>comparingByKey())
 				.sorted(Map.Entry.<String, Integer>comparingByValue(Comparator.reverseOrder()))
 				.forEach(entry -> {

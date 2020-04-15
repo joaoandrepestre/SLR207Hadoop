@@ -57,7 +57,7 @@ public class Deploy {
 		compileSlave();
 		createJar();
 		for (String machine : machinesOn) {
-			CopyFile cp = new CopyFile("slave.jar", machine, Constants.BASEDIR);
+			CopyFile cp = new CopyFile("slave.jar", machine, Constants.BASEDIR, 0);
 			threads.add(cp);
 			cp.start();
 		}

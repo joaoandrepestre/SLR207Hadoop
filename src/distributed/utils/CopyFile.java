@@ -8,11 +8,13 @@ public class CopyFile extends Thread {
     private String filename;
     private String machine;
     private String destinationDir;
+    private int verbose;
 
-    public CopyFile(String filename, String machine, String destinationDir) {
+    public CopyFile(String filename, String machine, String destinationDir, int verbose) {
         this.filename = filename;
         this.machine = machine;
         this.destinationDir = destinationDir;
+        this.verbose = verbose;
     }
 
     private void createDestDir() throws IOException, InterruptedException {
@@ -27,6 +29,7 @@ public class CopyFile extends Thread {
         createDestDir();
         ProcessBuilder pb = new ProcessBuilder("scp", filename, machine + ":" + destinationDir);
         pb.redirectErrorStream(true);
+        if(verbose == 1) pb.inheritIO();
         Process p = pb.start();
 
         p.waitFor(Constants.TIMEOUT, TimeUnit.SECONDS);

@@ -24,7 +24,7 @@ public class Clean {
 		ArrayList<Thread> threads = new ArrayList<Thread>();
 
 		for (String machine : machinesOn) {
-			DeleteDir d = new DeleteDir(machine, Constants.BASEDIR);
+			DeleteDir d = new DeleteDir(machine, Constants.BASEDIR, 0);
 			threads.add(d);
 			d.start();
 		}
