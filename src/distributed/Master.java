@@ -29,6 +29,7 @@ public class Master {
 		machinesOn = new BufferedReader(new FileReader(filename));
 		int maxNbMachines = Integer.parseInt(machinesOn.readLine());
 		this.nbMachines = _nbMachines > maxNbMachines ? maxNbMachines : _nbMachines;
+		this.nbMachines = this.nbMachines == 0 ? 1 : nbMachines;
 		machinesUsed = new ArrayList<String>();
 		this.out = out;
 		this.verbose = verbose;
