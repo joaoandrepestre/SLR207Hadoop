@@ -11,17 +11,26 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import distributed.utils.*;
 
+/* 
+* The class Deploy checks all machines and deploys the slave.jar to all active ones.
+ */
 public class Deploy {
 
-	ConcurrentLinkedQueue<String> machinesOn;
+	ConcurrentLinkedQueue<String> machinesOn; /* data structure to store the active machines */
 
-	BufferedReader in = null;
+	BufferedReader in = null; /* input file reader */
 
+	/* 
+	* Constructor. Initializes the variables.
+	 */
 	public Deploy(String filename) throws FileNotFoundException {
 		in = new BufferedReader(new FileReader(filename));
 		machinesOn = new ConcurrentLinkedQueue<String>();
 	}
 
+	/* 
+	* Compiles the Slave class and all dependencies.
+	 */
 	public static void compileSlave() throws IOException, InterruptedException {
 		ProcessBuilder pb = new ProcessBuilder("javac", "-d", ".", "src/distributed/Slave.java", 
 																   "src/distributed/utils/CopyFile.java",
@@ -35,6 +44,9 @@ public class Deploy {
 		p.waitFor();
 	}
 
+	/* 
+	* Creates a jar file from the compiled Slave class.
+	 */
 	public static void createJar() throws InterruptedException, IOException {
 		ProcessBuilder pb = new ProcessBuilder("jar", "cfm", "slave.jar", "manifest.mf", "distributed");
 		pb.redirectErrorStream(true);
@@ -43,6 +55,9 @@ public class Deploy {
 		p.waitFor();
 	}
 
+	/* 
+	* Deletes compiled classes and local slave.jar
+	 */
 	public static void cleanJar() throws IOException, InterruptedException {
 		ProcessBuilder pb = new ProcessBuilder("rm", "-rf", "distributed", "slave.jar");
 		pb.redirectErrorStream(true);
@@ -51,6 +66,10 @@ public class Deploy {
 		p.waitFor();
 	}
 
+	/* 
+	* Compiles the Slave, creates the jar and copies it to all active machines
+	* then cleans local classes and jar
+	 */
 	public void copyToAll() throws InterruptedException, IOException {
 		ArrayList<Thread> threads = new ArrayList<Thread>();
 		
@@ -69,6 +88,9 @@ public class Deploy {
 		cleanJar();
 	}
 
+	/* 
+	* Checks all machines. Defines the active machines structure. Writes active machines to an external file.
+	 */
 	public void checkAll() throws IOException, InterruptedException {
 		ArrayList<Thread> threads = new ArrayList<Thread>();
 
@@ -105,6 +127,9 @@ public class Deploy {
 		outFile.close();
 	}
 
+	/* 
+	* Main function. Checks all machines and deploys to the active ones.
+	 */
 	public static void main(String args[]) throws IOException, InterruptedException {
 		String targets = args[0];
 

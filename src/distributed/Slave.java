@@ -13,12 +13,18 @@ import java.util.Map;
 
 import distributed.utils.*;
 
+/* 
+* The class Slave is called by the Master to run the different parts of the MapReduce system.
+ */
 public class Slave {
 
-	private String hostname;
-	private String[] machines;
-	private int verbose;
+	private String hostname; /* name of this machine */
+	private String[] machines; /* machines used */
+	private int verbose; /* if 1, the execution will log more details */
 
+	/* 
+	* Constructor. Initializes the variables.
+	 */
 	public Slave(int verbose) throws NumberFormatException, IOException {
 		hostname = InetAddress.getLocalHost().getHostName();
 		this.verbose = verbose;
@@ -32,10 +38,15 @@ public class Slave {
 		machinesFile.close();
 	}
 
+	/* 
+	* Reads the split file and writes each word followed by 1 as a new line in the mapped file.
+	* @param filename Name of the split file to be mapped
+	* @param verbose if 1, the execution will log more details
+	 */
 	public static void map(String filename, int verbose) throws IOException, InterruptedException {
 		if (verbose == 1)
 			System.out.println("[" + InetAddress.getLocalHost().getHostName() + "]" + "Creating maps directory...");
-		Local.createDir(Constants.BASEDIR + "/maps", verbose);
+		Local.createDir(Constants.BASEDIR + "/maps");
 
 		BufferedReader splitFile = new BufferedReader(new FileReader(filename));
 		BufferedWriter mapFile = new BufferedWriter(
@@ -61,10 +72,16 @@ public class Slave {
 		mapFile.close();
 	}
 
+	/* 
+	* Reads the mapped file and, for each word, gets the hash and adds it to the file hash-hostname.txt.
+	* For each hash, define the machine index as hash % nbMachines. Zips all hashs that go to the same 
+	* machine together.
+	* @param filename Name of the mapped file to hash
+	 */
 	public void hash(String filename) throws IOException, InterruptedException {
 		if (verbose == 1)
 			System.out.println("[" + hostname + "]" + "Creating shuffles directory...");
-		Local.createDir(Constants.BASEDIR + "/shuffles", verbose);
+		Local.createDir(Constants.BASEDIR + "/shuffles");
 
 		BufferedReader mapFile = new BufferedReader(new FileReader(filename));
 		ArrayList<Integer> hashs = new ArrayList<Integer>();
@@ -89,7 +106,7 @@ public class Slave {
 
 		if (verbose == 1)
 			System.out.println("[" + hostname + "]" + "Creating zips directory...");
-		Local.createDir(Constants.BASEDIR + "/shuffles/zips", verbose);
+		Local.createDir(Constants.BASEDIR + "/shuffles/zips");
 		for (int hash : hashs) {
 			int machineIndex = hash % nbMachines;
 			String machine = machines[machineIndex];
@@ -102,6 +119,10 @@ public class Slave {
 		}
 	}
 
+	/* 
+	* Hashs the mapped file, sends the zipped files to the appropriate machines and unzips them.
+	* @param filename Name of the mapped file to shuffle
+	 */
 	public void shuffle(String filename) throws NumberFormatException, IOException, InterruptedException {
 		ArrayList<Thread> threads = new ArrayList<Thread>();
 
@@ -127,13 +148,17 @@ public class Slave {
 		}
 	}
 
+	/* 
+	* Reads all received shuffled files and adds up the occurrence of words.
+	* @param verbose if 1, the execution will log more details 
+	 */
 	public static void reduce(int verbose) throws IOException, InterruptedException {
 		HashMap<String, Integer> reduces = new HashMap<String, Integer>();
 		Integer count;
 
 		if (verbose == 1)
 			System.out.println("[" + InetAddress.getLocalHost().getHostName() + "]" + "Creating reduces directory...");
-		Local.createDir(Constants.BASEDIR + "/reduces", verbose);
+		Local.createDir(Constants.BASEDIR + "/reduces");
 
 		File shufflesreceivedDir = new File(Constants.BASEDIR + "/shufflesreceived/tmp/jpestre/shuffles");
 		for (File file : shufflesreceivedDir.listFiles()) {
@@ -163,6 +188,10 @@ public class Slave {
 		}
 	}
 
+	/* 
+	* Main function. Gets the mode of execution and the file to be processed
+	* and decides which part of the MapReduce model to run.
+	 */
 	public static void main(String args[]) throws InterruptedException, IOException {
 
 		int mode = Integer.parseInt(args[0]);

@@ -16,14 +16,22 @@ import java.util.Map;
 
 import distributed.utils.*;
 
+/* 
+* The class Master is the main class of the MapReduce system, 
+* calls the slave in the other machines in the system in order 
+* to count the words of an input text file.
+ */
 public class Master {
 
-	private BufferedReader machinesOn;
-	private ArrayList<String> machinesUsed;
-	private int nbMachines;
-	private PrintStream out = null;
-	private int verbose;
+	private BufferedReader machinesOn; /* file with the names of active machines */
+	private ArrayList<String> machinesUsed; /* list of machines used by the system */
+	private int nbMachines; /* number of machines used */
+	private PrintStream out = null; /* output file printer */
+	private int verbose; /* if 1, the execution will log more details */
 
+	/* 
+	* Contructor. Initializes the variables. Limits the number of machines between 1 and the number of active machines
+	 */
 	public Master(String filename, int _nbMachines, PrintStream out, int verbose)
 			throws NumberFormatException, IOException {
 		machinesOn = new BufferedReader(new FileReader(filename));
@@ -35,10 +43,14 @@ public class Master {
 		this.verbose = verbose;
 	}
 
+	/* 
+	* Splits the input file into nbMachines pieces and sends it to the other machines used.
+	* @param input Name of the input file
+	 */
 	public void split(String input) throws IOException, InterruptedException {
 		if (verbose == 1)
 			System.out.println("Creating splits directory...");
-		Local.createDir(Constants.BASEDIR + "/splits", verbose);
+		Local.createDir(Constants.BASEDIR + "/splits");
 
 		ArrayList<Thread> threads = new ArrayList<Thread>();
 		RandomAccessFile inputFile = new RandomAccessFile(input, "r");
@@ -86,6 +98,9 @@ public class Master {
 		}
 	}
 
+	/* 
+	* Calls the slave in map mode in all machines used.
+	 */
 	public void map() throws IOException, InterruptedException {
 		ArrayList<Thread> threads = new ArrayList<Thread>();
 
@@ -105,6 +120,9 @@ public class Master {
 		}
 	}
 
+	/* 
+	* Sends the file with the machines used to all machines used.
+	 */
 	public void prepareShuffle() throws IOException, InterruptedException {
 		ArrayList<Thread> threads = new ArrayList<Thread>();
 
@@ -121,6 +139,9 @@ public class Master {
 		}
 	}
 
+	/* 
+	* Calls the slave in shuffle mode in all machines used.
+	 */
 	public void suffle() throws IOException, InterruptedException {
 		ArrayList<Thread> threads = new ArrayList<Thread>();
 
@@ -141,6 +162,9 @@ public class Master {
 		}
 	}
 
+	/* 
+	* Calls the slave in reduce mode in all machines used.
+	 */
 	public void reduce() throws IOException, InterruptedException {
 		ArrayList<Thread> threads = new ArrayList<Thread>();
 
@@ -157,12 +181,15 @@ public class Master {
 		}
 	}
 
+	/* 
+	* Gets all reduced files from the machines used.
+	 */
 	public void getReducedFiles() throws IOException, InterruptedException {
 		ArrayList<Thread> threads = new ArrayList<Thread>();
 
 		if (verbose == 1)
 			System.out.println("Creating results directory...");
-		Local.createDir(Constants.BASEDIR + "/results", verbose);
+		Local.createDir(Constants.BASEDIR + "/results");
 		for (String machine : machinesUsed) {
 			GetFilesInDir get = new GetFilesInDir(machine, Constants.BASEDIR + "/reduces",
 					Constants.BASEDIR + "/results", verbose);
@@ -177,6 +204,9 @@ public class Master {
 		}
 	}
 
+	/* 
+	* Gets all reduced files and adds up the results. Sorts and prints this result.
+	 */
 	public void getResults() throws IOException, InterruptedException {
 		HashMap<String, Integer> results = new HashMap<String, Integer>();
 		getReducedFiles();
@@ -199,6 +229,9 @@ public class Master {
 				});
 	}
 
+	/* 
+	* Splits the input file, maps, shuffles and reduces. Times each step.
+	 */
 	public static void main(String args[]) throws IOException, InterruptedException {
 		String machinesOn = args[0];
 		String input = args[1];

@@ -4,13 +4,19 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+/* 
+* The class GetFilesInDir copies all the files in the directory from the target machine to this machine.
+ */
 public class GetFilesInDir extends Thread {
 
-    private String machine;
-    private String dirname;
-    private String destinationDir;
-    private int verbose;
+    private String machine; /* name of the target machine */
+    private String dirname; /* directory from which to copie files */
+    private String destinationDir; /* directory to which files will be copied */
+    private int verbose; /* if 1, the execution will log more details */
 
+    /* 
+    * Constructor. Initializes the variables.
+     */
     public GetFilesInDir(String machine, String dirname, String destinationDir, int verbose) {
         this.machine = machine;
         this.dirname = dirname;
@@ -18,6 +24,10 @@ public class GetFilesInDir extends Thread {
         this.verbose = verbose;
     }
 
+    /* 
+    * Copies the specified file from the machine to this machine.
+    * @param filename Name of the file to be copied
+     */
     private void getFile(String filename) throws IOException, InterruptedException {
         ProcessBuilder pb = new ProcessBuilder("scp", machine + ":" + dirname + "/" + filename, destinationDir);
         pb.redirectErrorStream(true);
@@ -27,6 +37,9 @@ public class GetFilesInDir extends Thread {
         p.waitFor();
     }
 
+    /* 
+    * Lists files the directory and calls getFile to each entry.
+     */
     private void getAllFiles() throws IOException, InterruptedException {
         ProcessBuilder pb = new ProcessBuilder("ssh", machine, "ls", dirname);
         pb.redirectErrorStream(true);
@@ -41,6 +54,9 @@ public class GetFilesInDir extends Thread {
         }
     }
 
+    /* 
+    * Main thread method. Gets all files.
+    */
     public void run() {
         try {
             getAllFiles();

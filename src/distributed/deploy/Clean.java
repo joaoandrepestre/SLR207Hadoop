@@ -9,17 +9,26 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import distributed.utils.*;
 
+/* 
+* The class Clean cleans the system by deleting the base directory
+ */
 public class Clean {
 
-	ConcurrentLinkedQueue<String> machinesOn;
+	ConcurrentLinkedQueue<String> machinesOn; /* data structure to store the active machines */
 
-	BufferedReader in = null;
+	BufferedReader in = null; /* input file reader */
 
+	/* 
+	* Constructor. Initializes the variables.
+	 */
 	public Clean(String filename) throws FileNotFoundException {
 		in = new BufferedReader(new FileReader(filename));
 		machinesOn = new ConcurrentLinkedQueue<String>();
 	}
 	
+	/* 
+	* Cleans all active machines. Iterates over the active machines and deletes the base directory
+	 */
 	public void cleanAll() throws InterruptedException, IOException {
 		ArrayList<Thread> threads = new ArrayList<Thread>();
 
@@ -34,6 +43,9 @@ public class Clean {
 		}
 	}
 
+	/* 
+	* Checks all machines. Defines the active machines structure
+	 */
 	public void checkAll() throws IOException, InterruptedException {
 		ArrayList<Thread> threads = new ArrayList<Thread>();
 
@@ -62,6 +74,9 @@ public class Clean {
 		}
 	}
 
+	/* 
+	* Main function. Checks all machines and cleans all active ones.
+	 */
 	public static void main(String args[]) throws IOException, InterruptedException {
 		String targets = args[0];
 
