@@ -3,7 +3,6 @@ package distributed.utils;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.concurrent.TimeUnit;
 
 public class GetFilesInDir extends Thread {
 
@@ -34,7 +33,7 @@ public class GetFilesInDir extends Thread {
         Process p = pb.start();
         BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
 
-        p.waitFor(Constants.TIMEOUT, TimeUnit.SECONDS);
+        p.waitFor();
 
         String filename;
         while((filename = reader.readLine()) != null){

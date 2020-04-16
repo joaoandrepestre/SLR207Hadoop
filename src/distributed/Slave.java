@@ -51,7 +51,7 @@ public class Slave {
 			words = line.split(" ");
 			for (String w : words) {
 				if (!w.isBlank()) {
-					w.toLowerCase();
+					w = w.toLowerCase();
 					mapFile.write(w + " 1\n");
 				}
 			}

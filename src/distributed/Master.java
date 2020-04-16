@@ -51,12 +51,14 @@ public class Master {
 		long splitEnd = splitSize;
 		for (int i = 0; i < nbMachines; i++) {
 			String splitName = Constants.BASEDIR + "/splits/S" + i + ".txt";
-			BufferedWriter split = new BufferedWriter(new FileWriter(splitName));
+			RandomAccessFile split = new RandomAccessFile(splitName, "rw");
 			char c = ' ';
+			byte b;
 			while (splitPos < splitEnd || !Character.isWhitespace(c)) {
 				try {
-					c = (char) inputFile.readByte();
-					split.write(c);
+					b = inputFile.readByte();
+					c = (char) b;
+					split.write(b);
 					splitPos++;
 				} catch (EOFException e) {
 					break;

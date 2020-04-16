@@ -1,7 +1,6 @@
 package distributed.utils;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 public class RunSlave extends Thread {
 
@@ -29,7 +28,7 @@ public class RunSlave extends Thread {
                 "" + mode, filename, ""+verbose);
 
         Process p = pb.inheritIO().start();
-        p.waitFor(Constants.TIMEOUT, TimeUnit.SECONDS);
+        p.waitFor();
     }
 
     public void run() {

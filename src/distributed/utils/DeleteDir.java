@@ -1,7 +1,6 @@
 package distributed.utils;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 public class DeleteDir extends Thread {
 
@@ -21,7 +20,7 @@ public class DeleteDir extends Thread {
         if(verbose == 1) pb.inheritIO();
         Process p = pb.start();
 
-        p.waitFor(Constants.TIMEOUT, TimeUnit.SECONDS);
+        p.waitFor();
     }
 
     public void run() {

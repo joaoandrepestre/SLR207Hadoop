@@ -1,7 +1,6 @@
 package distributed.utils;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 public class Local {
 
@@ -10,7 +9,7 @@ public class Local {
         pb.redirectErrorStream(true);
         Process p = pb.start();
 
-        p.waitFor(Constants.TIMEOUT, TimeUnit.SECONDS);
+        p.waitFor();
     }
 
     public static void zipFile(String filename, String zipname, int verbose) throws IOException, InterruptedException {
@@ -19,7 +18,7 @@ public class Local {
         if(verbose == 1) pb.inheritIO();
         Process p = pb.start();
 
-        p.waitFor(Constants.TIMEOUT, TimeUnit.SECONDS);
+        p.waitFor();
     }
 
     public static int positiveHash(String s){
